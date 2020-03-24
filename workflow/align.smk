@@ -29,13 +29,13 @@ rule download_fa:
         fa = GENOME_FA, fai = GENOME_FAI
     shell:
         """
-       # wget https://hgdownload.soe.ucsc.edu/goldenPath/{params.genome}/bigZips/{params.genome}.fa.gz -O {output.fa}.gz
-       #  gunzip < {output.fa}.gz > {output.fa}
-       cp tmp_folder/{params.genome}.fa {output.fa}
+        wget https://hgdownload.soe.ucsc.edu/goldenPath/{params.genome}/bigZips/{params.genome}.fa.gz -O {output.fa}.gz
+        gunzip < {output.fa}.gz > {output.fa}
+       # cp tmp_folder/{params.genome}.fa {output.fa}
        # rm -f {params.genome}.fa.gz
         samtools faidx {output.fa}
-        samtools faidx {output.fa} chr17 > temp
-        mv temp {output.fa}
+        #samtools faidx {output.fa} chr17 > temp
+        #mv temp {output.fa}
         """
 
 # Generate BWA index
@@ -61,11 +61,23 @@ rule align:
         f2 = "fastq/{sample}.pair2.fq.gz",
         index_sa = BWA_INDEX_FILE
     output:
-        "bams/{sample}.bam"
+        "bams/{sample}.raw.bam"
     shell:
         """
         bwa mem {input.fa} {input.f1} {input.f2} | samtools view -Sb - -o {output}
-        echo " {input.index_sa} " 
         """
 
-
+rule sortbam:
+    input:
+        "bams/{sample}.raw.bam"
+    output:
+        "bams/{sample}.bam"
+    shadow:
+        "shallow"
+    shell:
+        """
+        mkdir -p metrics
+        samtools sort {input} -o {output}.tempfile
+        java -jar /picard.jar MarkDuplicates I={output}.tempfile O={output} M=metrics/marked_dup_metrics.txt
+        #rm -f {output}.tempfile
+        """

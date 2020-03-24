@@ -8,6 +8,8 @@ SAMPLES = ["KAPAP1_POS_A1","KAPAP2_POS_A3"]
 # Get the names of the final output files
 BAMS = expand("bams/{sample}.bam", sample = SAMPLES)
 GENOME_NAME = "hg38"
+GENOME_NAME = config["genome"]
+print(f"Your genome = {GENOME_NAME}")
 
 # Genome raw files
 GENOME_FA= ref_folder + "/" + GENOME_NAME + ".fa"
